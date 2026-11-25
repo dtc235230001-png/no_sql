@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICTU Analytics - Bảng Quản Trị Hệ Thống</title>
+
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              teal: '#0f766e',
+              blue: '#2563eb',
+              purple: '#8b5cf6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F8FAFC;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ================= HEADER (LIGHT MODE SAAS) ================= -->
+  <header class="bg-white border-b border-[#E2E8F0] sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      
+      <!-- Bên trái: Tiêu đề "ICTU Analytics" -->
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-[#0f766e] flex items-center justify-center text-white text-sm">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <h1 class="text-lg font-bold font-display text-slate-900 tracking-tight">
+          ICTU Analytics
+        </h1>
+      </div>
+
+      <!-- Bên phải: icon làm mới + icon thông báo + user info + Nút về trang báo -->
+      <div class="flex items-center space-x-4">
+        
+        <!-- Live Refresh controller -->
+        <div class="flex items-center space-x-1.5 text-xs text-slate-500">
+          <button onclick="fetchAllData()" class="p-1.5 hover:text-slate-900 transition" title="Làm mới dữ liệu">
+            <i class="fa-solid fa-arrows-rotate text-xs"></i>
+          </button>
+        </div>
+
+        <span class="text-slate-200">|</span>
+
+        <!-- Icon thông báo & User avatar -->
+        <div class="flex items-center space-x-3 text-xs">
+          <button class="text-slate-400 hover:text-slate-600 transition" title="Thông báo">
+            <i class="fa-regular fa-bell text-sm"></i>
+          </button>
+          
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center font-bold text-xs text-slate-700">
+              A
+            </div>
+            <span class="hidden md:inline font-semibold text-slate-700">Admin</span>
+          </div>
+        </div>
+
+        <!-- Nút Xem Trang Báo -->
+        <a href="/" class="text-xs font-semibold text-slate-700 hover:text-[#0f766e] bg-slate-50 hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-md transition">
+          <i class="fa-solid fa-arrow-up-right-from-square mr-1 text-[11px]"></i>
+          <span>Trang Báo</span>
+        </a>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= NỘI DUNG CHÍNH (CONTAINER) ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- ================= HÀNG 1 - 4 THẺ KPI NGANG (GRID 4 CỘT) ================= -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Thẻ 1: Unique Visitors (Hôm nay) -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="text-xs font-medium text-slate-500">
+            Unique Visitors (Hôm nay)
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-2 tracking-tight" id="kpiUvBitmap">
+            0
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-100">
+          Redis Bitmaps (Định danh theo User ID)
+        </div>
+      </div>
+
+      <!-- Thẻ 2: Ước lượng Độc giả (HLL) -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="text-xs font-medium text-slate-500">
+            Ước lượng Độc giả (HLL)
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-2 tracking-tight" id="kpiUvHll">
+            0
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-100">
+          HyperLogLog • Sai số ~0.81% (12KB)
+        </div>
+      </div>
+
+      <!-- Thẻ 3: Tổng lượt xem (PV) -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="text-xs font-medium text-slate-500">
+            Tổng lượt xem (PV)
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-2 tracking-tight" id="kpiTotalPv">
+            0
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-100 flex items-center">
+          <i class="fa-solid fa-bolt mr-1 text-[10px] text-teal-600"></i>
+          <span>Lượt xem thời gian thực (Redis INCR)</span>
+        </div>
+      </div>
+
+      <!-- Thẻ 4: Đồng bộ MongoDB -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>Đồng bộ MongoDB</span>
+            <button onclick="triggerSync()" id="btnSyncNow" class="text-[11px] font-semibold text-slate-700 hover:text-[#0f766e] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded transition">
+              Đồng bộ ngay
+            </button>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-2 tracking-tight" id="kpiSyncTime">
+            17:20:00
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span>Cron tự động sau 03:45</span>
+          <span class="text-emerald-600 font-medium"><i class="fa-solid fa-check text-[10px] mr-1"></i>Đã chốt</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= HÀNG 2 - BIỂU ĐỒ TƯƠNG QUAN (FULL WIDTH) ================= -->
+    <section class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900 font-display">
+            Tương quan Dữ liệu Độc giả: Bitmaps vs HyperLogLog
+          </h2>
+          <p class="text-xs text-slate-500">So sánh số liệu UV định danh chính xác (Bitmaps) và UV tập hợp lớn ước lượng (HyperLogLog)</p>
+        </div>
+
+        <div class="flex items-center space-x-3 text-xs">
+          <!-- Legend -->
+          <div class="flex items-center space-x-3">
+            <span class="flex items-center space-x-1.5 text-slate-600">
+              <span class="w-3 h-3 rounded-xs bg-[#2563eb]"></span>
+              <span class="font-medium">Bitmaps (Chính xác)</span>
+            </span>
+            <span class="flex items-center space-x-1.5 text-slate-600">
+              <span class="w-3 h-3 rounded-xs bg-[#8b5cf6]"></span>
+              <span class="font-medium">HyperLogLog (Ước lượng)</span>
+            </span>
+          </div>
+
+          <!-- Dropdown chọn thời gian -->
+          <select class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-md px-2.5 py-1 focus:outline-none focus:border-slate-400 font-medium">
+            <option>7 Ngày qua</option>
+            <option>14 Ngày qua</option>
+            <option>30 Ngày qua</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Area Chart Canvas -->
+      <div class="h-64 sm:h-72 w-full relative">
+        <canvas id="correlationChart"></canvas>
+      </div>
+    </section>
+
+    <!-- ================= HÀNG 3 - 2 BẢNG DỮ LIỆU (GRID 2 CỘT BẰNG NHAU) ================= -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- BẢNG TRÁI: Top Trending (Sorted Sets) -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-3 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <div>
+              <h3 class="text-sm font-bold font-display text-slate-900">
+                Top Trending (Sorted Sets)
+              </h3>
+              <p class="text-xs text-slate-500">Bảng xếp hạng bài viết theo điểm số tương tác thời gian thực</p>
+            </div>
+            <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg text-[11px]">
+              <button onclick="changeTrendingPeriod('day', this)" class="trend-period-btn px-2.5 py-1 font-semibold rounded-md bg-white text-[#0f766e] shadow-xs transition">Hôm nay</button>
+              <button onclick="changeTrendingPeriod('week', this)" class="trend-period-btn px-2.5 py-1 font-medium rounded-md text-slate-600 hover:text-slate-900 transition">Tuần này</button>
+              <button onclick="changeTrendingPeriod('month', this)" class="trend-period-btn px-2.5 py-1 font-medium rounded-md text-slate-600 hover:text-slate-900 transition">Tháng này</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 font-semibold border-b border-slate-100">
+                <tr>
+                  <th class="py-2.5 px-3 w-14">Hạng</th>
+                  <th class="py-2.5 px-3">Tên bài viết</th>
+                  <th class="py-2.5 px-3 text-right w-28">Điểm</th>
+                </tr>
+              </thead>
+              <tbody id="trendingTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <!-- JS Render: Hạng, Tên bài, Điểm + progress bar màu xanh -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BẢNG PHẢI: Thống kê theo bài viết (Ẩn ID kỹ thuật, căn lề phải thẳng hàng) -->
+      <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-3 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <div>
+              <h3 class="text-sm font-bold font-display text-slate-900">
+                Thống kê theo bài viết
+              </h3>
+              <p class="text-xs text-slate-500">Chi tiết số lượt đọc tích lũy theo từng bài viết</p>
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium" id="postsCountText">8 bài viết</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 font-semibold border-b border-slate-100">
+                <tr>
+                  <th class="py-2.5 px-3">Tên bài viết</th>
+                  <th class="py-2.5 px-3">Chuyên mục</th>
+                  <th class="py-2.5 px-3 text-right">Lượt xem (PV)</th>
+                </tr>
+              </thead>
+              <tbody id="postsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <!-- JS Render: Tên bài viết, Chuyên mục, Lượt xem (PV) -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= HÀNG 4: TEST CONTROLS & LỊCH SỬ MONGODB ================= -->
+    <section class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+        <div>
+          <h3 class="text-sm font-bold font-display text-slate-900">
+            Lịch sử Đồng bộ Dữ liệu MongoDB (DailyStat) & Công cụ Kiểm thử
+          </h3>
+          <p class="text-xs text-slate-500">Lưu trữ các mốc dữ liệu cuối ngày và công cụ giả lập luồng đọc phục vụ báo cáo</p>
+        </div>
+
+        <!-- Công cụ kiểm thử test tải -->
+        <div class="flex items-center space-x-2 text-xs">
+          <span class="text-slate-400 mr-1 hidden sm:inline">Mô phỏng truy cập:</span>
+          <button onclick="simulateTraffic(5)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition">
+            +5 views
+          </button>
+          <button onclick="simulateTraffic(20)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition">
+            +20 views
+          </button>
+          <button onclick="resetTodayStats()" class="px-2.5 py-1 text-slate-400 hover:text-red-600 transition" title="Xóa dữ liệu test hôm nay">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bảng Lịch sử DailyStat -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="text-slate-400 font-semibold border-b border-slate-100">
+            <tr>
+              <th class="py-2 px-3">Ngày</th>
+              <th class="py-2 px-3 text-right">Tổng PV</th>
+              <th class="py-2 px-3 text-right">UV Bitmaps</th>
+              <th class="py-2 px-3 text-right">UV HyperLogLog</th>
+              <th class="py-2 px-3 text-center">Top Trending</th>
+              <th class="py-2 px-3 text-right">Thời gian chốt</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-100 text-slate-700">
+            <tr><td colspan="6" class="text-center py-4 text-slate-400">Đang tải lịch sử...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-[#E2E8F0] bg-white text-slate-500 text-xs py-4 text-center mt-12">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>ICTU Analytics &bull; Hệ thống Quản trị & Phân tích Dữ liệu Lớn NoSQL</div>
+      <div class="text-slate-400 font-mono text-[11px]">Trường ĐH Công nghệ Thông tin & Truyền thông Thái Nguyên</div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div id="toastBox" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- ================= JAVASCRIPT ================= -->
+  <script>
+    let chartInstance = null;
+    let allPostsData = [];
+
+    // Định dạng số nguyên chuẩn Việt Nam: dùng dấu chấm (.) phân cách hàng nghìn thay vì dấu phẩy (,)
+    function formatNumber(num) {
+      if (num === null || num === undefined) return '0';
+      return Math.round(Number(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 text-white text-xs px-3.5 py-2 rounded-md shadow-lg pointer-events-auto transition duration-300';
+      toast.innerText = msg;
+      box.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    // Khởi tạo Biểu đồ Area Chart tương quan
+    function initChart() {
+      const ctx = document.getElementById('correlationChart').getContext('2d');
+      const labels = ['07/11', '08/11', '09/11', '10/11', '11/11', '12/11', 'Hôm nay'];
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Bitmaps (Chính xác)',
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointBackgroundColor: '#2563eb'
+            },
+            {
+              label: 'HyperLogLog (Ước lượng)',
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.08)',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointBackgroundColor: '#8b5cf6'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              padding: 10,
+              cornerRadius: 6,
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 12 },
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + formatNumber(context.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#64748b', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: '#f1f5f9' },
+              beginAtZero: true,
+              ticks: {
+                color: '#64748b',
+                font: { size: 11 },
+                callback: function(value) {
+                  return formatNumber(value);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Cập nhật biểu đồ theo số liệu thực tế từ MongoDB History và Redis Realtime
+    function updateChartWithRealData(historyList, todayBitmap, todayHll) {
+      if (!chartInstance) return;
+
+      const labels = [];
+      const bitmapData = [];
+      const hllData = [];
+
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const label = i === 0 ? `${dd}/${mm} (Nay)` : `${dd}/${mm}`;
+        labels.push(label);
+
+        if (i === 0) {
+          bitmapData.push(todayBitmap || 0);
+          hllData.push(todayHll || 0);
+        } else {
+          const found = (historyList || []).find(row => row.date === dateStr);
+          bitmapData.push(found ? Number(found.uv_exact_bitmap || 0) : 0);
+          hllData.push(found ? Number(found.uv_approx_hll || 0) : 0);
+        }
+      }
+
+      chartInstance.data.labels = labels;
+      chartInstance.data.datasets[0].data = bitmapData;
+      chartInstance.data.datasets[1].data = hllData;
+      chartInstance.update();
+    }
+
+    // 1. Fetch Realtime Stats
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats/realtime');
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+
+          // Cập nhật thẻ KPI bằng số liệu thực tế từ Redis 100%
+          const liveBitmap = Number(d.uv_exact_bitmap || 0);
+          const liveHll = Number(d.uv_approx_hll || 0);
+          const livePv = Number(d.total_pv || 0);
+
+          document.getElementById('kpiUvBitmap').innerText = formatNumber(liveBitmap);
+          document.getElementById('kpiUvHll').innerText = formatNumber(liveHll);
+          document.getElementById('kpiTotalPv').innerText = formatNumber(livePv);
+
+          // Cập nhật biểu đồ với dữ liệu thực tế
+          if (window.latestHistoryData) {
+            updateChartWithRealData(window.latestHistoryData, liveBitmap, liveHll);
+          }
+
+          // Render bảng Trending theo chu kỳ hiện tại
+          await fetchTrending();
+        }
+      } catch (e) {
+        console.error('Lỗi fetch stats:', e);
+      }
+    }
+
+    let currentTrendPeriod = 'day';
+
+    async function changeTrendingPeriod(period, btn) {
+      currentTrendPeriod = period;
+      document.querySelectorAll('.trend-period-btn').forEach(b => {
+        b.className = 'trend-period-btn px-2.5 py-1 font-medium rounded-md text-slate-600 hover:text-slate-900 transition';
+      });
+      btn.className = 'trend-period-btn px-2.5 py-1 font-semibold rounded-md bg-white text-[#0f766e] shadow-xs transition';
+      await fetchTrending();
+    }
+
+    async function fetchTrending() {
+      try {
+        const res = await fetch(`/api/stats/trending?period=${currentTrendPeriod}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          renderTrendingTable(json.data);
+        }
+      } catch (e) {
+        console.error('Lỗi fetch trending:', e);
+      }
+    }
+
+    function renderTrendingTable(list) {
+      const tbody = document.getElementById('trendingTableBody');
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-400">Chưa có dữ liệu</td></tr>`;
+        return;
+      }
+
+      const top5 = list.slice(0, 5);
+      const maxScore = Math.max(...top5.map(i => i.score || 0), 1);
+
+      tbody.innerHTML = top5.map((item, idx) => {
+        const score = Number(item.score || 0);
+        const percent = score > 0 ? Math.min(100, Math.round((score / maxScore) * 100)) : 0;
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-medium text-slate-800">
+              <div class="line-clamp-1">${item.title}</div>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <div class="font-bold text-slate-900">${formatNumber(score)}</div>
+              <div class="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
+                <div class="bg-[#2563eb] h-1 rounded-full" style="width: ${percent}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 2. Fetch danh sách bài viết (Bảng phải: Hiển thị đúng số lượt đọc thực tế từ Redis)
+    async function fetchPosts() {
+      try {
+        const res = await fetch('/api/posts');
+        const json = await res.json();
+        if (json.success) {
+          allPostsData = json.data;
+          document.getElementById('postsCountText').innerText = `${allPostsData.length} bài viết`;
+          renderPostsTable(allPostsData);
+        }
+      } catch (e) {
+        console.error('Lỗi fetch posts:', e);
+      }
+    }
+
+    function renderPostsTable(posts) {
+      const tbody = document.getElementById('postsTableBody');
+      tbody.innerHTML = posts.map(p => {
+        const liveView = Number(p.pv || 0);
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-medium text-slate-800">
+              <div class="line-clamp-1">${p.title}</div>
+            </td>
+            <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${p.category}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-slate-900 whitespace-nowrap">${formatNumber(liveView)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 3. Trigger Sync sang MongoDB
+    async function triggerSync() {
+      const btn = document.getElementById('btnSyncNow');
+      btn.disabled = true;
+      btn.innerText = 'Đang đồng bộ...';
+
+      try {
+        const res = await fetch('/api/cron/trigger-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const json = await res.json();
+        if (json.success) {
+          const now = new Date().toTimeString().split(' ')[0];
+          document.getElementById('kpiSyncTime').innerText = now;
+          showToast('Đã đồng bộ sang MongoDB thành công!');
+          fetchHistory();
+        } else {
+          showToast('Lỗi khi đồng bộ');
+        }
+      } catch (e) {
+        showToast('Lỗi kết nối máy chủ');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Đồng bộ ngay';
+      }
+    }
+
+    // 4. Fetch History MongoDB DailyStat
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/stats/history');
+        const json = await res.json();
+        if (json.success) {
+          const tbody = document.getElementById('historyTableBody');
+          window.latestHistoryData = json.data || [];
+          const curBitmap = parseInt(document.getElementById('kpiUvBitmap').innerText.replace(/\./g, '') || '0', 10);
+          const curHll = parseInt(document.getElementById('kpiUvHll').innerText.replace(/\./g, '') || '0', 10);
+          updateChartWithRealData(window.latestHistoryData, curBitmap, curHll);
+
+          if (!json.data || json.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-400">Chưa có bản ghi lịch sử</td></tr>`;
+            return;
+          }
+
+          // Cập nhật giờ sync mới nhất từ MongoDB lên thẻ KPI
+          if (json.data[0] && json.data[0].synced_at) {
+            const latestTime = new Date(json.data[0].synced_at).toLocaleTimeString('vi-VN');
+            document.getElementById('kpiSyncTime').innerText = latestTime;
+          }
+
+          tbody.innerHTML = json.data.map(row => {
+            const time = new Date(row.synced_at).toLocaleTimeString('vi-VN');
+            const topCount = row.top_trending ? row.top_trending.length : 0;
+            return `
+              <tr class="hover:bg-slate-50 transition">
+                <td class="py-2.5 px-3 font-medium text-slate-800">${row.date}</td>
+                <td class="py-2.5 px-3 text-right font-semibold text-slate-700">${formatNumber(row.total_pv)}</td>
+                <td class="py-2.5 px-3 text-right text-blue-600 font-medium">${formatNumber(row.uv_exact_bitmap)}</td>
+                <td class="py-2.5 px-3 text-right text-purple-600 font-medium">${formatNumber(row.uv_approx_hll)}</td>
+                <td class="py-2.5 px-3 text-center text-slate-500">${topCount} mục</td>
+                <td class="py-2.5 px-3 text-right text-slate-400">${time}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        console.error('Lỗi fetch history:', e);
+      }
+    }
+
+    // 5. Test Tools
+    async function simulateTraffic(count) {
+      if (allPostsData.length === 0) return;
+      showToast(`Đang mô phỏng ${count} lượt xem...`);
+
+      const roles = [null, 1, 2, 5, 10, null];
+      for (let i = 0; i < count; i++) {
+        const post = allPostsData[Math.floor(Math.random() * allPostsData.length)];
+        const uid = roles[Math.floor(Math.random() * roles.length)];
+        const sess = uid ? 'sess_' + uid : 'sess_guest_' + Math.random().toString(36).substring(2, 7);
+
+        await fetch(`/api/posts/${post.id}/view`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid, sessionId: sess })
+        });
+        await new Promise(r => setTimeout(r, 40));
+      }
+
+      showToast(`Hoàn tất +${count} lượt xem!`);
+      fetchAllData();
+    }
+
+    async function resetTodayStats() {
+      if (!confirm('Xóa dữ liệu thống kê kiểm thử hôm nay?')) return;
+      try {
+        const res = await fetch('/api/stats/reset-redis-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast('Đã làm sạch dữ liệu hôm nay');
+          fetchAllData();
+        }
+      } catch (e) {
+        showToast('Lỗi khi xóa');
+      }
+    }
+
+    function fetchAllData() {
+      fetchStats();
+      fetchPosts();
+      fetchHistory();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      fetchAllData();
+      setInterval(fetchAllData, 3000);
+    });
+  </script>
+</body>
+</html>

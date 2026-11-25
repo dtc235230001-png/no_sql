@@ -1,0 +1,35 @@
+{
+  "name": "redis-mongo-analytics",
+  "version": "1.0.0",
+  "description": "Ung dung thong ke luot truy cap PV UV va Trending su dung Redis, MongoDB va Cron Job",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "redis",
+    "mongodb",
+    "mongoose",
+    "node-cron",
+    "express",
+    "analytics",
+    "pageviews",
+    "unique-visitors",
+    "trending",
+    "bitmap",
+    "hyperloglog",
+    "sorted-set"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "node-cron": "^3.0.3",
+    "redis": "^4.7.0"
+  }
+}
+
