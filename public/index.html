@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICTU NEWS - Báo Điện Tử Đại Học Công Nghệ Thông Tin & Truyền Thông</title>
+
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .article-body p { margin-bottom: 1.5rem; line-height: 1.9; color: #334155; font-size: 1.05rem; }
+    .article-body h3 { font-size: 1.4rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.85rem; color: #0f172a; line-height: 1.4; }
+    .article-body ul { list-style-type: disc; margin-left: 1.75rem; margin-bottom: 1.5rem; color: #334155; }
+    .article-body li { margin-bottom: 0.6rem; line-height: 1.75; font-size: 1.05rem; }
+    .article-body blockquote {
+      border-left: 3px solid #0f766e;
+      padding: 1rem 1.25rem;
+      background-color: #f8fafc;
+      font-style: italic;
+      color: #334155;
+      margin: 1.75rem 0;
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ================= TOP BAR ================= -->
+  <div class="bg-[#F8FAFC] border-b border-[#E2E8F0] text-xs text-slate-500 py-2">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="font-medium text-slate-700">ICTU Online</span>
+        <span>•</span>
+        <span>Cơ quan ngôn luận Trường ĐH Công nghệ Thông tin & Truyền thông</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>Thứ Năm, 12/11/2026</span>
+        <span>•</span>
+        <span><i class="fa-solid fa-cloud-sun text-slate-400 mr-1"></i>Thái Nguyên: 24°C</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HEADER CHÍNH ================= -->
+  <header class="border-b border-[#E2E8F0] bg-white sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      
+      <!-- Logo Bên trái: Mũ tốt nghiệp xanh đậm + chữ ICTU NEWS đen đậm -->
+      <a href="javascript:void(0)" onclick="goHome()" class="flex items-center space-x-3 group">
+        <div class="text-[#0f766e] text-3xl">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <span class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-display">
+            ICTU NEWS
+          </span>
+          <p class="text-[11px] text-slate-500 font-semibold tracking-wide">Trường Đại học Công nghệ Thông tin & Truyền thông</p>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Thanh chuyên mục (Category Bar) -->
+    <div class="border-t border-[#E2E8F0]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        
+        <nav class="flex items-center space-x-6 text-sm overflow-x-auto whitespace-nowrap py-3">
+          <button onclick="filterCategory('Trang chủ', this)" class="cat-nav-link text-[#0f766e] font-bold border-b-2 border-[#0f766e] pb-1 transition">
+            Trang chủ
+          </button>
+        </nav>
+
+        <div class="relative py-2 md:py-0 w-full md:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" placeholder="Tìm kiếm bài viết..." oninput="handleSearch(this.value)" class="w-full text-xs pl-8 pr-3 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md focus:outline-none focus:border-slate-400 text-slate-800 placeholder-slate-400">
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= VIEW 1: TRANG CHỦ BÁO ĐIỆN TỬ ================= -->
+  <div id="homeView" class="flex-1 w-full">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 space-y-10">
+
+      <!-- ================= HERO GRID 2 CỘT TỶ LỆ 8:4 ================= -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- CỘT TRÁI (TIN TIÊU ĐIỂM LỚN - TỶ LỆ 8) -->
+        <div class="lg:col-span-8 flex flex-col justify-between">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            
+            <div class="md:col-span-6 space-y-3.5 order-2 md:order-1">
+              <div class="text-xs text-slate-500 font-medium flex items-center space-x-1.5 flex-wrap gap-y-1">
+                <span id="heroCategoryBadge" class="hidden px-2 py-0.5 rounded text-[11px] font-bold bg-teal-50 text-[#0f766e] border border-teal-200"></span>
+                <span class="text-slate-400">Nguồn:</span>
+                <span id="heroAuthor" class="font-bold text-slate-800">Nguyễn Thị Ngọc Anh</span>
+                <span>•</span>
+                <span id="heroDate">12/11/2026</span>
+                <span>•</span>
+                <span id="heroReadTime" class="text-slate-500">4 phút đọc</span>
+              </div>
+
+              <h1 id="heroTitle" class="text-xl sm:text-2xl font-bold font-display text-slate-900 leading-snug cursor-pointer hover:text-[#0f766e] transition">
+                Trường Đại học Công nghệ Thông tin & Truyền thông (ICTU): Khám phá khuôn viên hiện đại và không gian đại học số thông minh
+              </h1>
+
+              <p id="heroSummary" class="text-sm text-slate-600 line-clamp-3 leading-relaxed">
+                Trường Đại học Công nghệ Thông tin và Truyền thông (Đại học Thái Nguyên) sở hữu khuôn viên hiện đại với hệ sinh thái giảng đường thông minh từ Tòa nhà C1 đến C6, quảng trường C5 thoáng đãng, ký túc xá tiện nghi cùng các trung tâm nghiên cứu tiên phong chuyển đổi số.
+              </p>
+
+              <div class="pt-2 flex items-center space-x-4 text-xs text-slate-500">
+                <span class="font-medium"><i class="fa-regular fa-eye mr-1"></i><span id="heroPv">0</span> lượt xem</span>
+                <button id="heroReadBtn" class="text-[#0f766e] font-semibold hover:underline">
+                  Đọc toàn bộ &rarr;
+                </button>
+              </div>
+            </div>
+
+            <div class="md:col-span-6 order-1 md:order-2">
+              <div id="heroImageWrapper" class="overflow-hidden rounded-lg cursor-pointer bg-slate-100 aspect-[4/3]">
+                <img id="heroImage" src="./ictu-viettel-doan-sinh-vien.jpg" alt="Hero" class="w-full h-full object-cover hover:scale-102 transition duration-500">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- CỘT PHẢI (DANH SÁCH 3 TIN MỚI NHẤT - TỶ LỆ 4) -->
+        <div class="lg:col-span-4 border-t lg:border-t-0 lg:border-l border-[#E2E8F0] lg:pl-8 space-y-6">
+          <h3 id="sideRecentTitle" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tin mới nhất</h3>
+          <div id="sideRecentList" class="space-y-5"></div>
+        </div>
+
+      </section>
+
+      <hr class="border-[#E2E8F0]">
+
+      <!-- ================= GRID CÁC BÀI VIẾT KHÁC ================= -->
+      <section class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 id="gridSectionTitle" class="text-lg font-bold font-display text-slate-900 tracking-tight">
+            Tin tức & Bài viết chuyên đề
+          </h2>
+          <span class="text-xs text-slate-500" id="postsCountText">Đang tải...</span>
+        </div>
+
+        <div id="postsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= VIEW 2: TRANG ĐỌC BÀI BÁO THẬT (FULL ARTICLE PAGE) ================= -->
+  <div id="articleView" class="hidden flex-1 w-full bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      
+      <!-- Breadcrumb Navigation & Nút Quay Lại -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 text-xs text-slate-500 mb-6">
+        <div class="flex items-center space-x-2">
+          <button onclick="goHome()" class="text-slate-600 hover:text-[#0f766e] font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> Trang chủ
+          </button>
+          <span>/</span>
+          <span id="artCategoryBreadcrumb" class="text-[#0f766e] font-medium">Chuyên mục</span>
+        </div>
+        <button onclick="goHome()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded border border-slate-200 transition">
+          &larr; Quay lại danh sách tin
+        </button>
+      </div>
+
+      <!-- Bố cục Bài báo: Cột chính bài đọc (8 cột) + Cột phụ Sidebar đọc nhiều (4 cột) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        
+        <!-- Cột Nội Dung Bài Báo Chi Tiết (8 cột) -->
+        <article class="lg:col-span-8 space-y-6">
+          
+          <div class="space-y-3">
+            <div class="text-xs font-semibold text-[#0f766e] uppercase tracking-wider" id="artCategory">
+              Chuyên mục
+            </div>
+
+            <!-- Tiêu đề lớn chuẩn báo chí -->
+            <h1 id="artTitle" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-display text-slate-900 leading-tight">
+              Tiêu đề bài viết
+            </h1>
+
+            <!-- Metadata tác giả, ngày đăng, lượt xem -->
+            <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 pt-2 pb-4 border-b border-slate-100">
+              <div class="flex items-center space-x-2">
+                <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">
+                  <i class="fa-solid fa-user-pen text-xs"></i>
+                </span>
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="text-slate-400 font-medium">Nguồn:</span>
+                    <span id="artAuthor" class="font-bold text-slate-800">Nguyễn Thị Ngọc Anh</span>
+                  </div>
+                  <div class="text-slate-400" id="artDate">05/11/2026</div>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded border border-slate-200">
+                  <i class="fa-regular fa-eye mr-1"></i><span id="artPv">0</span> lượt đọc
+                </span>
+                <span class="text-slate-400">Thời gian đọc: 4 phút</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sapo bài viết (Đoạn dẫn nhập in đậm / trang nhã) -->
+          <div id="artSummary" class="text-lg text-slate-700 font-medium leading-relaxed bg-[#F8FAFC] border-l-4 border-[#0f766e] p-4 rounded-r-lg">
+            Tóm tắt sapo bài viết...
+          </div>
+
+          <!-- Ảnh bìa lớn bài viết -->
+          <div class="rounded-lg overflow-hidden bg-slate-100 aspect-video w-full shadow-sm">
+            <img id="artImage" src="" alt="Thumbnail" class="w-full h-full object-cover">
+          </div>
+          <p id="artImageCaption" class="text-xs text-center text-slate-500 italic mt-2.5">Hình ảnh: Bản tin ICTU Online</p>
+
+          <!-- Nội dung bài viết chi tiết -->
+          <div id="artContent" class="article-body text-slate-800 pt-4">
+            <!-- Nội dung bài viết được load vào đây -->
+          </div>
+
+          <!-- Nguồn bài viết ở cuối bài -->
+          <div class="mt-8 pt-4 pb-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-slate-600 bg-slate-50 px-4 py-3 rounded-lg border border-slate-100">
+            <span class="italic text-slate-500">Bản quyền tin bài thuộc Trường ĐH Công nghệ Thông tin & Truyền thông</span>
+            <span class="font-bold text-slate-800 flex items-center">
+              <i class="fa-solid fa-pen-nib mr-1.5 text-[#0f766e]"></i> Nguồn: <span id="artSourceBottom" class="ml-1 text-[#0f766e]">Nguyễn Thị Ngọc Anh</span>
+            </span>
+          </div>
+
+          <!-- Footer bài viết -->
+          <div class="pt-8 pb-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="text-xs text-slate-500 flex items-center space-x-2">
+              <span class="font-semibold text-slate-700">Chủ đề:</span>
+              <span class="px-2.5 py-1 bg-slate-100 rounded text-slate-700">#ICTU</span>
+              <span class="px-2.5 py-1 bg-slate-100 rounded text-slate-700">#DaiHocThaiNguyen</span>
+              <span class="px-2.5 py-1 bg-slate-100 rounded text-slate-700">#NoSQL</span>
+            </div>
+            <button onclick="goHome()" class="px-4 py-2 bg-[#0f766e] hover:bg-[#115e59] text-white text-xs font-bold rounded transition shadow-xs">
+              &larr; Về Trang Chủ Tin Tức
+            </button>
+          </div>
+
+        </article>
+
+        <!-- Cột Phụ Bên Phải: Đọc nhiều nhất & Bài viết nổi bật (4 cột) -->
+        <aside class="lg:col-span-4 space-y-8 border-t lg:border-t-0 lg:border-l border-[#E2E8F0] lg:pl-8">
+          
+          <!-- Box Đọc Nhiều Nhất (Trending) -->
+          <div class="space-y-4">
+            <h3 class="text-sm font-bold font-display text-slate-900 pb-2 border-b-2 border-slate-900 flex items-center justify-between">
+              <span>ĐỌC NHIỀU NHẤT</span>
+              <i class="fa-solid fa-arrow-trend-up text-[#0f766e]"></i>
+            </h3>
+            <div id="artTrendingSideList" class="space-y-4">
+              <!-- Render top bài đọc nhiều -->
+            </div>
+          </div>
+
+          <!-- Box Giới thiệu Trường ICTU -->
+          <div class="p-4 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] space-y-2">
+            <h4 class="font-bold text-xs text-slate-900 uppercase">Trường ĐH CNTT & Truyền thông</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Trường đại học trọng điểm về công nghệ thông tin và chuyển đổi số tại khu vực trung du & miền núi phía Bắc.
+            </p>
+            <div class="pt-2">
+              <a href="https://ictu.edu.vn" target="_blank" class="text-xs font-semibold text-[#0f766e] hover:underline">
+                Cổng thông tin ictu.edu.vn &rarr;
+              </a>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- ================= JAVASCRIPT ================= -->
+  <script>
+    let allPosts = [];
+    let currentCategory = 'Trang chủ';
+    let searchQuery = '';
+    let currentRole = 'guest';
+    let currentUserId = null;
+    let sessionId = 'sess_' + Math.random().toString(36).substring(2, 9);
+
+    function showToast(msg) {
+      const box = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 text-white text-xs px-3.5 py-2 rounded shadow-lg pointer-events-auto transition-opacity duration-300';
+      toast.innerText = msg;
+      box.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    function toggleUserDropdown() {
+      document.getElementById('userRoleDropdown').classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const btn = document.getElementById('userRoleBtn');
+      const dd = document.getElementById('userRoleDropdown');
+      if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
+        dd.classList.add('hidden');
+      }
+    });
+
+    function changeRole(role) {
+      currentRole = role;
+      const label = document.getElementById('userRoleName');
+      if (role === 'guest') {
+        currentUserId = null;
+        label.innerText = 'Khách (Guest)';
+        showToast('Đang đọc bài: Khách vãng lai (Ghi nhận HLL)');
+      } else if (role === 'user1') {
+        currentUserId = 1;
+        label.innerText = 'User #1';
+        showToast('Đang đọc bài: User #1 (Ghi nhận Bitmap)');
+      } else if (role === 'user2') {
+        currentUserId = 2;
+        label.innerText = 'User #2';
+        showToast('Đang đọc bài: User #2 (Ghi nhận Bitmap)');
+      } else if (role === 'user5') {
+        currentUserId = 5;
+        label.innerText = 'User #5';
+        showToast('Đang đọc bài: User #5 (Ghi nhận Bitmap)');
+      }
+      document.getElementById('userRoleDropdown').classList.add('hidden');
+    }
+
+    // Điều hướng giữa Trang Chủ và Trang Đọc Bài
+    function goHome() {
+      document.getElementById('articleView').classList.add('hidden');
+      document.getElementById('homeView').classList.remove('hidden');
+      currentCategory = 'Trang chủ';
+      document.querySelectorAll('.cat-nav-link').forEach((el, idx) => {
+        if (idx === 0) {
+          el.className = 'cat-nav-link text-[#0f766e] font-bold border-b-2 border-[#0f766e] pb-1 transition';
+        } else {
+          el.className = 'cat-nav-link text-slate-600 hover:text-slate-900 font-medium pb-1 transition';
+        }
+      });
+      renderUI();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function loadPosts() {
+      try {
+        const res = await fetch('./posts.json');
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+            allPosts = json.data;
+            renderUI();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Không thể tải ./posts.json:', e);
+      }
+      // Dự phòng nếu chạy cùng server backend
+      try {
+        const res2 = await fetch('/api/posts');
+        if (res2.ok && (res2.headers.get('content-type') || '').includes('application/json')) {
+          const json2 = await res2.json();
+          if (json2 && json2.success) {
+            allPosts = json2.data;
+            renderUI();
+          }
+        }
+      } catch (e) {}
+      // Dự phòng nếu chạy cùng server backend
+      try {
+        const res2 = await fetch('/api/posts');
+        if (res2.ok) {
+          const json2 = await res2.json();
+          if (json2 && json2.success) {
+            allPosts = json2.data;
+            renderUI();
+          }
+        }
+      } catch (e) {}
+    }
+
+    function matchCategory(cat1, cat2) {
+      if (!cat1 || !cat2) return false;
+      if (cat2 === 'all' || cat2 === 'Trang chủ') return true;
+      const c1 = cat1.toLowerCase().trim();
+      const c2 = cat2.toLowerCase().trim();
+      return c1 === c2 || c1.includes(c2) || c2.includes(c1);
+    }
+
+    function renderUI() {
+      if (!allPosts || allPosts.length === 0) return;
+
+      // Lọc danh sách bài viết theo chuyên mục & từ khóa tìm kiếm
+      let filtered = allPosts;
+      if (currentCategory !== 'all' && currentCategory !== 'Trang chủ') {
+        filtered = allPosts.filter(p => matchCategory(p.category, currentCategory));
+      }
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.summary.toLowerCase().includes(q));
+      }
+
+      // Trường hợp không tìm thấy bài viết nào
+      if (filtered.length === 0) {
+        document.getElementById('heroAuthor').innerText = 'Thông báo';
+        document.getElementById('heroDate').innerText = '12/11/2026';
+        document.getElementById('heroTitle').innerText = `Chưa có bài viết trong chuyên mục "${currentCategory}"`;
+        document.getElementById('heroSummary').innerText = 'Vui lòng chọn chuyên mục khác trên thanh menu hoặc quay về mục "Trang chủ" để đón đọc tin tức mới nhất.';
+        document.getElementById('heroImage').src = './ictu-toan-canh-campus.jpg';
+        document.getElementById('heroPv').innerText = 0;
+        const catBadge = document.getElementById('heroCategoryBadge');
+        if (catBadge) catBadge.classList.add('hidden');
+        document.getElementById('sideRecentList').innerHTML = '';
+        renderGrid(filtered);
+        return;
+      }
+
+      // 1. Bài Hero Tiêu Điểm: Cập nhật bài đầu tiên của chuyên mục đã chọn
+      const hero = filtered[0];
+      const catBadge = document.getElementById('heroCategoryBadge');
+      if (catBadge) {
+        catBadge.innerText = hero.category;
+        catBadge.classList.remove('hidden');
+      }
+      document.getElementById('heroAuthor').innerText = hero.author;
+      document.getElementById('heroDate').innerText = hero.date;
+      document.getElementById('heroTitle').innerText = hero.title;
+      document.getElementById('heroTitle').onclick = () => openArticle(hero.id);
+      document.getElementById('heroSummary').innerText = hero.summary;
+      document.getElementById('heroImage').src = hero.thumbnail;
+      if (document.getElementById('heroImageWrapper')) {
+        document.getElementById('heroImageWrapper').onclick = () => openArticle(hero.id);
+      }
+      if (document.getElementById('heroReadBtn')) {
+        document.getElementById('heroReadBtn').onclick = () => openArticle(hero.id);
+      }
+      document.getElementById('heroPv').innerText = hero.pv || 0;
+
+      // 2. Cột phải: Tin mới nhất hoặc các bài cùng chuyên mục
+      const sideContainer = document.getElementById('sideRecentList');
+      const sideTitle = document.getElementById('sideRecentTitle');
+      let sidePosts = [];
+      if (currentCategory === 'all' || currentCategory === 'Trang chủ') {
+        if (sideTitle) sideTitle.innerText = 'Tin mới nhất';
+        sidePosts = allPosts.slice(1, 4);
+      } else {
+        if (filtered.length > 1) {
+          if (sideTitle) sideTitle.innerText = `Cùng chuyên mục "${currentCategory}"`;
+          sidePosts = filtered.slice(1, 4);
+        } else {
+          if (sideTitle) sideTitle.innerText = 'Bài viết nổi bật khác';
+          sidePosts = allPosts.filter(p => p.id !== hero.id).slice(0, 3);
+        }
+      }
+
+      sideContainer.innerHTML = sidePosts.map(p => `
+        <div class="flex items-start space-x-3.5 group cursor-pointer" onclick="openArticle('${p.id}')">
+          <img src="${p.thumbnail}" alt="${p.title}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-md flex-shrink-0 bg-slate-100">
+          <div class="space-y-1">
+            <div class="text-[10px] font-bold text-[#0f766e] uppercase tracking-wide">${p.category}</div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-[#0f766e] transition line-clamp-2 leading-snug">
+              ${p.title}
+            </h4>
+            <div class="text-[11px] text-slate-400">
+              Nguồn: ${p.author || 'Nguyễn Thị Ngọc Anh'} • ${p.date}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // 3. Grid danh sách các bài viết bên dưới
+      renderGrid(filtered);
+    }
+
+    function renderGrid(list) {
+      const container = document.getElementById('postsGridContainer');
+      const countEl = document.getElementById('postsCountText');
+      const gridTitle = document.getElementById('gridSectionTitle');
+
+      const items = list !== undefined ? list : allPosts;
+
+      if (gridTitle) {
+        if (currentCategory === 'all' || currentCategory === 'Trang chủ') {
+          gridTitle.innerText = 'Tin tức & Hoạt động nổi bật';
+        } else {
+          gridTitle.innerText = `Chuyên mục: ${currentCategory}`;
+        }
+      }
+
+      if (countEl) {
+        countEl.innerText = `${items.length} bài viết`;
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-10 text-center text-slate-400">
+            <p class="text-sm">Không có bài viết nào phù hợp.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(p => `
+        <article class="flex flex-col justify-between group cursor-pointer space-y-3" onclick="openArticle('${p.id}')">
+          <div class="aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
+            <img src="${p.thumbnail}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-102 transition duration-300">
+          </div>
+          <div class="space-y-1.5 flex-1">
+            <div class="text-[11px] font-semibold text-[#0f766e] uppercase tracking-wide">
+              ${p.category}
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 group-hover:text-[#0f766e] transition leading-snug line-clamp-2">
+              ${p.title}
+            </h3>
+            <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+              ${p.summary}
+            </p>
+          </div>
+          <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span class="font-medium text-slate-600">Nguồn: ${p.author || 'Nguyễn Thị Ngọc Anh'}</span>
+            <span>${p.date} • ${p.pv || 0} lượt xem</span>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function filterCategory(cat, btn) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-nav-link').forEach(el => {
+        el.className = 'cat-nav-link text-slate-600 hover:text-slate-900 font-medium pb-1 transition';
+      });
+      btn.className = 'cat-nav-link text-[#0f766e] font-bold border-b-2 border-[#0f766e] pb-1 transition';
+      goHome();
+      renderUI(); // Cập nhật Hero, Cột phải và Grid theo chuyên mục ngay lập tức!
+    }
+
+    function handleSearch(val) {
+      searchQuery = val;
+      renderUI();
+    }
+
+    // ================= MỞ BÀI BÁO THẬT TOÀN MÀN HÌNH =================
+    async function openArticle(id) {
+      try {
+        let p = allPosts.find(item => item.id === id);
+        if (!p) {
+          try {
+            const res = await fetch('./posts.json');
+            if (res.ok) {
+              const json = await res.json();
+              if (json && json.success && Array.isArray(json.data)) {
+                allPosts = json.data;
+                p = allPosts.find(item => item.id === id);
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (!p) {
+          console.error('Không tìm thấy bài viết:', id);
+          return;
+        }
+
+        // Tăng lượt xem cục bộ khi chạy tĩnh
+        p.pv = (p.pv || 0) + 1;
+
+        // Điền dữ liệu vào Article View
+        document.getElementById('artCategoryBreadcrumb').innerText = p.category || 'Tin tức';
+        document.getElementById('artCategory').innerText = p.category || 'Tin tức';
+        document.getElementById('artTitle').innerText = p.title || '';
+        document.getElementById('artAuthor').innerText = p.author || 'Nguyễn Thị Ngọc Anh';
+        if (document.getElementById('artSourceBottom')) {
+          document.getElementById('artSourceBottom').innerText = p.author || 'Nguyễn Thị Ngọc Anh';
+        }
+        document.getElementById('artDate').innerText = p.date || '';
+        document.getElementById('artPv').innerText = p.pv;
+        document.getElementById('artSummary').innerText = p.summary || '';
+        document.getElementById('artImage').src = p.thumbnail || p.image || '';
+        const captionEl = document.getElementById('artImageCaption');
+        if (captionEl) {
+          if (p.id === 'post-ictu-ai') {
+            captionEl.innerText = 'Sinh viên ICTU trong chương trình tham quan, trải nghiệm thực tế và ký kết hợp tác hướng nghiệp tại Trụ sở Tập đoàn Công nghiệp - Viễn thông Quân đội (Viettel).';
+          } else if (p.id === 'post-ictu-samsung-sic') {
+            captionEl.innerText = 'Ban Giám hiệu ICTU cùng các đại biểu cấp cao Samsung Electronics Việt Nam thực hiện nghi thức khánh thành Trung tâm SIC Lab.';
+          } else if (p.id === 'post-ictu-coding-contest') {
+            captionEl.innerText = 'Toàn cảnh ngày hội Open STEM Day 2026 tại Trường Đại học Công nghệ Thông tin & Truyền thông (ICTU).';
+          } else if (p.id === 'post-ictu-khai-giang') {
+            captionEl.innerText = 'Sân khấu đại nhạc hội Chào tân sinh viên ICTU ONE 2026 rực rỡ sắc màu.';
+          } else if (p.id === 'post-ictu-halloween') {
+            captionEl.innerText = 'Poster chính thức Đêm hội Halloween ICTU 2026: The Cyber Realm.';
+          } else {
+            captionEl.innerText = `Hình ảnh: ${p.title}`;
+          }
+        }
+        document.getElementById('artContent').innerHTML = p.content || '';
+
+        // Render Sidebar Trending (Đọc nhiều nhất)
+        const trendingList = allPosts.filter(item => item.id !== id).slice(0, 4);
+        document.getElementById('artTrendingSideList').innerHTML = trendingList.map((item, idx) => `
+          <div class="flex items-start space-x-3 cursor-pointer group" onclick="openArticle('${item.id}')">
+            <span class="text-base font-bold text-slate-300 w-4 font-display">0${idx + 1}</span>
+            <div class="space-y-1">
+              <h5 class="text-xs font-bold text-slate-800 group-hover:text-[#0f766e] transition line-clamp-2 leading-snug">
+                ${item.title}
+              </h5>
+              <div class="text-[11px] text-slate-400">${item.date} • ${item.pv || 0} lượt xem</div>
+            </div>
+          </div>
+        `).join('');
+
+        // Ẩn trang chủ, hiện trang bài báo
+        document.getElementById('homeView').classList.add('hidden');
+        document.getElementById('articleView').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        console.error('Lỗi mở bài báo:', e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadPosts);
+  </script>
+</body>
+</html>

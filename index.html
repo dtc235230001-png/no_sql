@@ -135,11 +135,11 @@
               </div>
 
               <h1 id="heroTitle" class="text-xl sm:text-2xl font-bold font-display text-slate-900 leading-snug cursor-pointer hover:text-[#0f766e] transition">
-                Trường Đại học Công nghệ Thông tin & Truyền thông (ICTU): Tiên phong chuyển đổi số và đào tạo nhân lực AI
+                Trường Đại học Công nghệ Thông tin & Truyền thông (ICTU): Khám phá khuôn viên hiện đại và không gian đại học số thông minh
               </h1>
 
               <p id="heroSummary" class="text-sm text-slate-600 line-clamp-3 leading-relaxed">
-                Trường Đại học Công nghệ Thông tin và Truyền thông (Đại học Thái Nguyên) không ngừng nâng cao chất lượng đào tạo, đầu tư mạnh mẽ các phòng lab tính toán hiệu năng cao chuyên sâu về Trí tuệ nhân tạo (AI), Vi mạch bán dẫn và Khoa học dữ liệu...
+                Trường Đại học Công nghệ Thông tin và Truyền thông (Đại học Thái Nguyên) sở hữu khuôn viên hiện đại với hệ sinh thái giảng đường thông minh từ Tòa nhà C1 đến C6, quảng trường C5 thoáng đãng, ký túc xá tiện nghi cùng các trung tâm nghiên cứu tiên phong chuyển đổi số.
               </p>
 
               <div class="pt-2 flex items-center space-x-4 text-xs text-slate-500">
@@ -152,7 +152,7 @@
 
             <div class="md:col-span-6 order-1 md:order-2">
               <div id="heroImageWrapper" class="overflow-hidden rounded-lg cursor-pointer bg-slate-100 aspect-[4/3]">
-                <img id="heroImage" src="/images/ictu-viettel-doan-sinh-vien.jpg" alt="Hero" class="w-full h-full object-cover hover:scale-102 transition duration-500">
+                <img id="heroImage" src="./ictu-viettel-doan-sinh-vien.jpg" alt="Hero" class="w-full h-full object-cover hover:scale-102 transition duration-500">
               </div>
             </div>
 
@@ -388,15 +388,29 @@
 
     async function loadPosts() {
       try {
-        const res = await fetch('/api/posts');
-        const json = await res.json();
-        if (json.success) {
-          allPosts = json.data;
-          renderUI();
+        const res = await fetch('./posts.json');
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+            allPosts = json.data;
+            renderUI();
+            return;
+          }
         }
       } catch (e) {
-        console.error('Lỗi tải bài viết:', e);
+        console.warn('Không thể tải ./posts.json:', e);
       }
+      // Dự phòng nếu chạy cùng server backend
+      try {
+        const res2 = await fetch('/api/posts');
+        if (res2.ok && (res2.headers.get('content-type') || '').includes('application/json')) {
+          const json2 = await res2.json();
+          if (json2 && json2.success) {
+            allPosts = json2.data;
+            renderUI();
+          }
+        }
+      } catch (e) {}
     }
 
     function matchCategory(cat1, cat2) {
@@ -426,7 +440,7 @@
         document.getElementById('heroDate').innerText = '12/11/2026';
         document.getElementById('heroTitle').innerText = `Chưa có bài viết trong chuyên mục "${currentCategory}"`;
         document.getElementById('heroSummary').innerText = 'Vui lòng chọn chuyên mục khác trên thanh menu hoặc quay về mục "Trang chủ" để đón đọc tin tức mới nhất.';
-        document.getElementById('heroImage').src = '/images/ictu-toan-canh-campus.jpg';
+        document.getElementById('heroImage').src = './ictu-toan-canh-campus.jpg';
         document.getElementById('heroPv').innerText = 0;
         const catBadge = document.getElementById('heroCategoryBadge');
         if (catBadge) catBadge.classList.add('hidden');
@@ -562,21 +576,27 @@
     // ================= MỞ BÀI BÁO THẬT TOÀN MÀN HÌNH =================
     async function openArticle(id) {
       try {
-        const res = await fetch(`/api/posts/${encodeURIComponent(id)}`);
-        const json = await res.json();
-        if (!json.success || !json.data) {
+        let p = allPosts.find(item => item.id === id);
+        if (!p) {
+          try {
+            const res = await fetch('./posts.json');
+            if (res.ok) {
+              const json = await res.json();
+              if (json && json.success && Array.isArray(json.data)) {
+                allPosts = json.data;
+                p = allPosts.find(item => item.id === id);
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (!p) {
           console.error('Không tìm thấy bài viết:', id);
           return;
         }
 
-        const p = json.data;
-
-        // Kích hoạt view thống kê NoSQL ngầm
-        fetch(`/api/posts/${encodeURIComponent(id)}/view`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUserId, sessionId })
-        }).catch(err => console.log('Silent view error:', err));
+        // Tăng lượt xem cục bộ khi chạy tĩnh
+        p.pv = (p.pv || 0) + 1;
 
         // Điền dữ liệu vào Article View
         document.getElementById('artCategoryBreadcrumb').innerText = p.category || 'Tin tức';
@@ -587,9 +607,9 @@
           document.getElementById('artSourceBottom').innerText = p.author || 'Nguyễn Thị Ngọc Anh';
         }
         document.getElementById('artDate').innerText = p.date || '';
-        document.getElementById('artPv').innerText = (p.pv || 0) + 1;
+        document.getElementById('artPv').innerText = p.pv;
         document.getElementById('artSummary').innerText = p.summary || '';
-        document.getElementById('artImage').src = p.thumbnail || '';
+        document.getElementById('artImage').src = p.thumbnail || p.image || '';
         const captionEl = document.getElementById('artImageCaption');
         if (captionEl) {
           if (p.id === 'post-ictu-ai') {
@@ -626,9 +646,6 @@
         document.getElementById('homeView').classList.add('hidden');
         document.getElementById('articleView').classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Làm mới lại số view ngầm
-        setTimeout(loadPosts, 500);
       } catch (e) {
         console.error('Lỗi mở bài báo:', e);
       }
