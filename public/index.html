@@ -411,17 +411,6 @@
           }
         }
       } catch (e) {}
-      // Dự phòng nếu chạy cùng server backend
-      try {
-        const res2 = await fetch('/api/posts');
-        if (res2.ok) {
-          const json2 = await res2.json();
-          if (json2 && json2.success) {
-            allPosts = json2.data;
-            renderUI();
-          }
-        }
-      } catch (e) {}
     }
 
     function matchCategory(cat1, cat2) {
@@ -584,6 +573,8 @@
       renderUI();
     }
 
+    const API_BASE_URL = 'https://turned-mom-natural-efficiently.trycloudflare.com';
+
     // ================= MỞ BÀI BÁO THẬT TOÀN MÀN HÌNH =================
     async function openArticle(id) {
       try {
@@ -606,8 +597,43 @@
           return;
         }
 
-        // Tăng lượt xem cục bộ khi chạy tĩnh
-        p.pv = (p.pv || 0) + 1;
+        // Lấy hoặc tạo định danh khách truy cập & phiên duy nhất cố định trong localStorage
+        let realVisitorId = localStorage.getItem('ictu_real_visitor_id');
+        if (!realVisitorId) {
+          realVisitorId = Math.floor(Math.random() * 1000000) + 1;
+          localStorage.setItem('ictu_real_visitor_id', realVisitorId);
+        }
+
+        let realSessionId = localStorage.getItem('ictu_real_session_id');
+        if (!realSessionId) {
+          realSessionId = 'sess_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+          localStorage.setItem('ictu_real_session_id', realSessionId);
+        }
+
+        // Ghi nhận lượt xem thật về Backend qua Cloudflare Tunnel API
+        try {
+          const trackRes = await fetch(`${API_BASE_URL}/api/posts/${id}/view`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: Number(realVisitorId),
+              sessionId: realSessionId
+            })
+          });
+          if (trackRes.ok) {
+            const trackData = await trackRes.json();
+            if (trackData && trackData.data && typeof trackData.data.postPv !== 'undefined') {
+              p.pv = trackData.data.postPv;
+            } else {
+              p.pv = (p.pv || 0) + 1;
+            }
+          } else {
+            p.pv = (p.pv || 0) + 1;
+          }
+        } catch (err) {
+          console.warn('Lỗi kết nối API Backend ghi nhận lượt xem, fallback tăng cục bộ:', err);
+          p.pv = (p.pv || 0) + 1;
+        }
 
         // Điền dữ liệu vào Article View
         document.getElementById('artCategoryBreadcrumb').innerText = p.category || 'Tin tức';
