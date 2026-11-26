@@ -402,7 +402,7 @@
       }
       // Dự phòng nếu chạy cùng server backend
       try {
-        const res2 = await fetch('/api/posts');
+        const res2 = await fetch(`${API_BASE_URL}/api/posts`);
         if (res2.ok && (res2.headers.get('content-type') || '').includes('application/json')) {
           const json2 = await res2.json();
           if (json2 && json2.success) {
@@ -573,7 +573,7 @@
       renderUI();
     }
 
-    const API_BASE_URL = 'https://turned-mom-natural-efficiently.trycloudflare.com';
+    const API_BASE_URL = 'https://no-sql-9xnv.onrender.com';
 
     // ================= MỞ BÀI BÁO THẬT TOÀN MÀN HÌNH =================
     async function openArticle(id) {

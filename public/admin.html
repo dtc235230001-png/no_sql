@@ -338,6 +338,7 @@
 
   <!-- ================= JAVASCRIPT ================= -->
   <script>
+    const API_BASE_URL = 'https://no-sql-9xnv.onrender.com';
     let chartInstance = null;
     let allPostsData = [];
 
@@ -468,7 +469,7 @@
     // 1. Fetch Realtime Stats
     async function fetchStats() {
       try {
-        const res = await fetch('/api/stats/realtime');
+        const res = await fetch(`${API_BASE_URL}/api/stats/realtime`);
         const json = await res.json();
         if (json.success) {
           const d = json.data;
@@ -508,7 +509,7 @@
 
     async function fetchTrending() {
       try {
-        const res = await fetch(`/api/stats/trending?period=${currentTrendPeriod}`);
+        const res = await fetch(`${API_BASE_URL}/api/stats/trending?period=${currentTrendPeriod}`);
         const json = await res.json();
         if (json.success && json.data) {
           renderTrendingTable(json.data);
@@ -551,7 +552,7 @@
     // 2. Fetch danh sách bài viết (Bảng phải: Hiển thị đúng số lượt đọc thực tế từ Redis)
     async function fetchPosts() {
       try {
-        const res = await fetch('/api/posts');
+        const res = await fetch(`${API_BASE_URL}/api/posts`);
         const json = await res.json();
         if (json.success) {
           allPostsData = json.data;
@@ -586,7 +587,7 @@
       btn.innerText = 'Đang đồng bộ...';
 
       try {
-        const res = await fetch('/api/cron/trigger-sync', {
+        const res = await fetch(`${API_BASE_URL}/api/cron/trigger-sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
@@ -611,7 +612,7 @@
     // 4. Fetch History MongoDB DailyStat
     async function fetchHistory() {
       try {
-        const res = await fetch('/api/stats/history');
+        const res = await fetch(`${API_BASE_URL}/api/stats/history`);
         const json = await res.json();
         if (json.success) {
           const tbody = document.getElementById('historyTableBody');
@@ -662,7 +663,7 @@
         const uid = roles[Math.floor(Math.random() * roles.length)];
         const sess = uid ? 'sess_' + uid : 'sess_guest_' + Math.random().toString(36).substring(2, 7);
 
-        await fetch(`/api/posts/${post.id}/view`, {
+        await fetch(`${API_BASE_URL}/api/posts/${post.id}/view`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: uid, sessionId: sess })
@@ -677,7 +678,7 @@
     async function resetTodayStats() {
       if (!confirm('Xóa dữ liệu thống kê kiểm thử hôm nay?')) return;
       try {
-        const res = await fetch('/api/stats/reset-redis-demo', {
+        const res = await fetch(`${API_BASE_URL}/api/stats/reset-redis-demo`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
