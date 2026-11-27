@@ -278,6 +278,128 @@
 
     </section>
 
+    <!-- ================= HÀNG 3.5: PHÂN TÍCH CHUYÊN SÂU REDIS BITMAPS (BITWISE & GETBIT) ================= -->
+    <section class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#E2E8F0] gap-2">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+            <h3 class="text-sm font-bold font-display text-slate-900">
+              Phân tích Chuyên sâu Redis Bitmaps (Bitwise Operations: BITOP & GETBIT)
+            </h3>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Khảo sát hiệu năng phép toán bitwise trên Upstash: Hợp tuần (BITOP OR), Giữ chân độc giả (BITOP AND) và Tra cứu bit theo User ID</p>
+        </div>
+        <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md">
+          <i class="fa-solid fa-microchip mr-1"></i>Upstash Serverless Engine
+        </span>
+      </div>
+
+      <!-- 4 Thẻ Phân tích Bitwise -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Thẻ 1: UV Tuần không trùng (BITOP OR) -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">UV Hợp tuần (7 ngày)</span>
+            <span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded">BITOP OR</span>
+          </div>
+          <div class="text-xl font-extrabold text-slate-900" id="bitUvWeekly">0</div>
+          <p class="text-[11px] text-slate-500">Loại bỏ 100% trùng lặp độc giả giữa các ngày</p>
+        </div>
+
+        <!-- Thẻ 2: Độc giả quay lại (BITOP AND) -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">Khách quay lại (2 ngày)</span>
+            <span class="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded">BITOP AND</span>
+          </div>
+          <div class="text-xl font-extrabold text-emerald-700" id="bitReturningUsers">0</div>
+          <p class="text-[11px] text-slate-500">Độc giả đọc báo cả hôm nay và hôm qua</p>
+        </div>
+
+        <!-- Thẻ 3: Tỷ lệ Retention -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">Tỷ lệ giữ chân (Retention)</span>
+            <span class="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.5 rounded">RETENTION %</span>
+          </div>
+          <div class="text-xl font-extrabold text-purple-700" id="bitRetentionRate">0.0%</div>
+          <p class="text-[11px] text-slate-500">Tỷ lệ độc giả hôm qua tiếp tục đọc hôm nay</p>
+        </div>
+
+        <!-- Thẻ 4: Dung lượng RAM Bitmap -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">Bộ nhớ RAM tiêu thụ</span>
+            <span class="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded" id="bitSavedPercent">-95% RAM</span>
+          </div>
+          <div class="text-xl font-extrabold text-amber-800" id="bitMemoryKb">0 KB</div>
+          <p class="text-[11px] text-slate-500" id="bitMemoryDetail">RDBMS tốn ~0 KB (Tiết kiệm vượt trội)</p>
+        </div>
+
+      </div>
+
+      <!-- Khối Công cụ Tra cứu Bit (Live User Inspector - GETBIT) -->
+      <div class="bg-slate-900 text-slate-100 rounded-xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-magnifying-glass text-blue-400 text-xs"></i>
+              <h4 class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                Công cụ Tra cứu Bit theo User ID (Lệnh GETBIT)
+              </h4>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Nhập User ID để kiểm tra trực tiếp trạng thái bit 0/1 trong dải chuỗi nhị phân Redis</p>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">
+            Key: <span class="text-blue-300" id="bitKeyName">stats:uv:bitmap:today</span>
+          </div>
+        </div>
+
+        <!-- Input tra cứu -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-regular fa-user text-xs"></i>
+            </div>
+            <input type="number" id="inpUserIdCheck" min="1" max="10000000" placeholder="Nhập User ID (vd: 10001, 23523, 50000)..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono">
+          </div>
+          <button onclick="checkUserBit()" id="btnCheckBit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg transition flex items-center justify-center space-x-1.5 shadow-sm">
+            <i class="fa-solid fa-bolt text-[11px]"></i>
+            <span>Kiểm tra GETBIT</span>
+          </button>
+          <button onclick="fillRandomUserId()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-lg transition border border-slate-700">
+            ID ngẫu nhiên
+          </button>
+        </div>
+
+        <!-- Khối hiển thị kết quả Bit -->
+        <div id="bitResultBox" class="hidden p-3.5 bg-slate-800/80 border border-slate-700 rounded-lg space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+              <span id="bitStatusBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Bit = 1 (Đã đọc bài)
+              </span>
+              <span class="text-xs text-slate-300" id="bitUserResultText">User ID: 10001</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">
+              Byte Index: <span class="text-amber-400 font-bold" id="bitByteIndex">#0</span> &bull; Bit Offset: <span class="text-blue-400 font-bold" id="bitBitOffset">#0</span>
+            </div>
+          </div>
+
+          <!-- Trực quan hóa 8 bit trong Byte -->
+          <div class="pt-2 border-t border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="text-slate-400 text-[11px]">Cấu trúc 8-bit trong Byte:</div>
+            <div class="flex items-center space-x-1.5 font-mono" id="byteBitsVisualizer">
+              <!-- JS render 8 bit buttons -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ================= HÀNG 4: TEST CONTROLS & LỊCH SỬ MONGODB ================= -->
     <section class="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-xs space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
@@ -693,10 +815,106 @@
       }
     }
 
+    // 6. Phân tích chuyên sâu Redis Bitmaps (Bitwise Operations)
+    async function fetchBitmapAdvanced() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/stats/bitmap-advanced`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const d = json.data;
+          document.getElementById('bitUvWeekly').innerText = formatNumber(d.weeklyExactUv);
+          document.getElementById('bitReturningUsers').innerText = formatNumber(d.returningUsers);
+          document.getElementById('bitRetentionRate').innerText = d.retentionRate;
+          document.getElementById('bitMemoryKb').innerText = `${d.memoryKb} KB`;
+          document.getElementById('bitKeyName').innerText = `stats:uv:bitmap:${json.date}`;
+
+          if (d.comparison) {
+            document.getElementById('bitSavedPercent').innerText = `Tiết kiệm ${d.comparison.savedPercent}`;
+            document.getElementById('bitMemoryDetail').innerText = `RDBMS tốn ~${d.comparison.rdbmsEstimateKb} KB (${d.memoryBytes} bytes RAM)`;
+          }
+        }
+      } catch (e) {
+        console.warn('Lỗi fetch bitmap-advanced:', e);
+      }
+    }
+
+    // 7. Tra cứu bit người dùng qua GETBIT
+    async function checkUserBit() {
+      const inp = document.getElementById('inpUserIdCheck');
+      const val = parseInt(inp.value, 10);
+      if (isNaN(val) || val < 0) {
+        showToast('Vui lòng nhập User ID hợp lệ (số không âm)!');
+        return;
+      }
+
+      const btn = document.getElementById('btnCheckBit');
+      btn.disabled = true;
+      btn.innerText = 'Đang đọc bit...';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/stats/bitmap-check-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: val })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const box = document.getElementById('bitResultBox');
+          box.classList.remove('hidden');
+
+          const badge = document.getElementById('bitStatusBadge');
+          if (json.hasViewed) {
+            badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            badge.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Bit = 1 (ĐÃ ĐỌC BÀI HÔM NAY)';
+          } else {
+            badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 border border-slate-600';
+            badge.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i>Bit = 0 (CHƯA ĐỌC BÀI HÔM NAY)';
+          }
+
+          document.getElementById('bitUserResultText').innerText = `User ID: ${json.userId} • Ngày: ${json.date}`;
+          document.getElementById('bitByteIndex').innerText = `#${json.byteIndex}`;
+          document.getElementById('bitBitOffset').innerText = `#${json.bitOffsetInByte}`;
+
+          // Visualizer 8 bits
+          const visualizer = document.getElementById('byteBitsVisualizer');
+          let bitsHtml = '';
+          for (let i = 0; i < 8; i++) {
+            const isTarget = (i === json.bitOffsetInByte);
+            const bitVal = isTarget ? json.bitValue : 0;
+            const bgClass = isTarget 
+              ? (bitVal === 1 ? 'bg-emerald-500 text-slate-900 font-extrabold ring-2 ring-emerald-300' : 'bg-rose-500 text-white font-bold ring-2 ring-rose-300')
+              : 'bg-slate-700 text-slate-400';
+            bitsHtml += `
+              <div class="flex flex-col items-center">
+                <span class="text-[9px] text-slate-500">b${i}</span>
+                <span class="w-6 h-6 flex items-center justify-center rounded text-xs ${bgClass}">
+                  ${bitVal}
+                </span>
+              </div>
+            `;
+          }
+          visualizer.innerHTML = bitsHtml;
+          showToast(`GETBIT User #${json.userId} -> Bit: ${json.bitValue}`);
+        }
+      } catch (err) {
+        showToast('Lỗi khi tra cứu bit người dùng');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt text-[11px] mr-1"></i>Kiểm tra GETBIT';
+      }
+    }
+
+    function fillRandomUserId() {
+      const currentId = localStorage.getItem('ictu_real_visitor_id') || Math.floor(Math.random() * 50000) + 1;
+      document.getElementById('inpUserIdCheck').value = currentId;
+      checkUserBit();
+    }
+
     function fetchAllData() {
       fetchStats();
       fetchPosts();
       fetchHistory();
+      fetchBitmapAdvanced();
     }
 
     window.addEventListener('DOMContentLoaded', () => {

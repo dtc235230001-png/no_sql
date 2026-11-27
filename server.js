@@ -98,6 +98,22 @@ const dailyStatSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  weekly_uv_bitmap: {
+    type: Number,
+    default: 0
+  },
+  retention_users: {
+    type: Number,
+    default: 0
+  },
+  retention_rate: {
+    type: String,
+    default: '0%'
+  },
+  bitmap_memory_bytes: {
+    type: Number,
+    default: 0
+  },
   uv_approx_hll: {
     type: Number,
     default: 0
@@ -504,10 +520,57 @@ const redisProxy = {
     else bitSet.delete(offset);
     return 1;
   },
+  async getBit(key, offset) {
+    if (isRedisConnected) return await redisClient.getBit(key, offset);
+    const bitSet = fallbackMemory.bitmaps.get(key);
+    return (bitSet && bitSet.has(offset)) ? 1 : 0;
+  },
   async bitCount(key) {
     if (isRedisConnected) return await redisClient.bitCount(key);
     const bitSet = fallbackMemory.bitmaps.get(key);
     return bitSet ? bitSet.size : 0;
+  },
+  async bitOp(operation, destKey, srcKeys) {
+    const keys = Array.isArray(srcKeys) ? srcKeys : [srcKeys];
+    if (isRedisConnected) {
+      // In node-redis v4, client.bitOp(operation, destKey, [keys...])
+      return await redisClient.bitOp(operation.toUpperCase(), destKey, keys);
+    }
+    // In-memory fallback
+    const op = operation.toUpperCase();
+    let resultSet = new Set();
+    if (op === 'OR') {
+      keys.forEach(k => {
+        const s = fallbackMemory.bitmaps.get(k);
+        if (s) s.forEach(val => resultSet.add(val));
+      });
+    } else if (op === 'AND') {
+      if (keys.length > 0) {
+        const first = fallbackMemory.bitmaps.get(keys[0]) || new Set();
+        resultSet = new Set(first);
+        for (let i = 1; i < keys.length; i++) {
+          const next = fallbackMemory.bitmaps.get(keys[i]) || new Set();
+          for (const item of resultSet) {
+            if (!next.has(item)) resultSet.delete(item);
+          }
+        }
+      }
+    }
+    fallbackMemory.bitmaps.set(destKey, resultSet);
+    return resultSet.size;
+  },
+  async strLen(key) {
+    if (isRedisConnected) {
+      try {
+        return await redisClient.strLen(key);
+      } catch (e) {
+        return 0;
+      }
+    }
+    const bitSet = fallbackMemory.bitmaps.get(key);
+    if (!bitSet || bitSet.size === 0) return 0;
+    const maxOffset = Math.max(...Array.from(bitSet));
+    return Math.ceil((maxOffset + 1) / 8);
   },
   async pfAdd(key, element) {
     if (isRedisConnected) return await redisClient.pfAdd(key, element);
@@ -560,6 +623,31 @@ function getTodayDateStr() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+// Helper: Lấy ngày hôm qua YYYY-MM-DD
+function getYesterdayDateStr(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  d.setDate(d.getDate() - 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Helper: Lấy danh sách 7 ngày gần nhất tính đến targetDate (YYYY-MM-DD)
+function getLast7DaysDateStrs(targetDateStr) {
+  const baseDate = targetDateStr ? new Date(targetDateStr) : new Date();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() - i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    days.push(`${year}-${month}-${day}`);
+  }
+  return days;
 }
 
 // Helper: Lấy mã tuần hiện tại YYYY-Www
@@ -817,6 +905,109 @@ app.get('/api/stats/realtime', async (req, res) => {
 });
 
 /**
+ * GET /api/stats/bitmap-advanced: Phân tích chuyên sâu Redis Bitmaps (Bitwise Operations)
+ * - UV hôm nay (BITCOUNT)
+ * - UV hợp tuần 7 ngày qua không trùng lặp (BITOP OR)
+ * - Số độc giả quay lại & Tỷ lệ Retention (BITOP AND)
+ * - Đo lường dung lượng RAM thực tế của Bitmap
+ */
+app.get('/api/stats/bitmap-advanced', async (req, res) => {
+  try {
+    const today = req.query.date || getTodayDateStr();
+    const yesterday = getYesterdayDateStr(today);
+    const last7Days = getLast7DaysDateStrs(today);
+
+    const todayKey = `stats:uv:bitmap:${today}`;
+    const yesterdayKey = `stats:uv:bitmap:${yesterday}`;
+
+    // 1. UV hôm nay và hôm qua
+    const todayUv = await redisProxy.bitCount(todayKey);
+    const yesterdayUv = await redisProxy.bitCount(yesterdayKey);
+
+    // 2. UV Hợp tuần 7 ngày bằng BITOP OR (Loại bỏ 100% trùng lặp giữa các ngày)
+    const weekDestKey = `stats:uv:bitmap:week_temp:${today}`;
+    const weekSrcKeys = last7Days.map(d => `stats:uv:bitmap:${d}`);
+    await redisProxy.bitOp('OR', weekDestKey, weekSrcKeys);
+    const weeklyExactUv = await redisProxy.bitCount(weekDestKey);
+
+    // 3. Khách quay lại bằng BITOP AND (Giao giữa hôm nay và hôm qua)
+    const retentionDestKey = `stats:uv:retention_temp:${today}`;
+    await redisProxy.bitOp('AND', retentionDestKey, [yesterdayKey, todayKey]);
+    const returningUsers = await redisProxy.bitCount(retentionDestKey);
+    const retentionRate = yesterdayUv > 0 ? ((returningUsers / yesterdayUv) * 100).toFixed(1) + '%' : '0.0%';
+
+    // 4. Đo lường kích thước bộ nhớ RAM thực tế
+    const memoryBytes = await redisProxy.strLen(todayKey);
+    const memoryKb = (memoryBytes / 1024).toFixed(2);
+    // So sánh: Nếu lưu RDBMS bảng UserViews (mỗi lượt xem tốn tối thiểu ~28 bytes index + row)
+    const rdbmsEstimateBytes = todayUv * 28;
+    const rdbmsEstimateKb = (rdbmsEstimateBytes / 1024).toFixed(2);
+    const memorySavedPercent = rdbmsEstimateBytes > 0 
+      ? Math.max(0, (((rdbmsEstimateBytes - memoryBytes) / rdbmsEstimateBytes) * 100)).toFixed(1) + '%'
+      : '95.0%';
+
+    res.json({
+      success: true,
+      date: today,
+      data: {
+        todayUv,
+        yesterdayUv,
+        weeklyExactUv,
+        returningUsers,
+        retentionRate,
+        memoryBytes,
+        memoryKb: Number(memoryKb),
+        comparison: {
+          bitmapMemoryKb: Number(memoryKb),
+          rdbmsEstimateKb: Number(rdbmsEstimateKb),
+          savedPercent: memorySavedPercent
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Lỗi khi phân tích Bitmap chuyên sâu:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi phân tích Bitmaps' });
+  }
+});
+
+/**
+ * POST /api/stats/bitmap-check-user: Tra cứu trạng thái đọc báo của User ID cụ thể qua GETBIT
+ */
+app.post('/api/stats/bitmap-check-user', async (req, res) => {
+  try {
+    const { userId, date } = req.body;
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId) || parsedUserId < 0) {
+      return res.status(400).json({ success: false, message: 'User ID không hợp lệ (phải là số nguyên không âm)' });
+    }
+
+    const targetDate = date || getTodayDateStr();
+    const key = `stats:uv:bitmap:${targetDate}`;
+
+    // Lệnh GETBIT đọc đúng 1 bit tại vị trí offset
+    const bitValue = await redisProxy.getBit(key, parsedUserId);
+    const byteIndex = Math.floor(parsedUserId / 8);
+    const bitOffsetInByte = parsedUserId % 8;
+
+    res.json({
+      success: true,
+      userId: parsedUserId,
+      date: targetDate,
+      bitValue,
+      hasViewed: bitValue === 1,
+      byteIndex,
+      bitOffsetInByte,
+      message: bitValue === 1
+        ? `Người dùng ID ${parsedUserId} ĐÃ đọc báo trong ngày ${targetDate} (Bit = 1 tại Byte #${byteIndex}, Bit #${bitOffsetInByte})`
+        : `Người dùng ID ${parsedUserId} CHƯA đọc bài viết nào trong ngày ${targetDate} (Bit = 0 tại Byte #${byteIndex}, Bit #${bitOffsetInByte})`
+    });
+  } catch (error) {
+    console.error('Lỗi khi tra cứu bit người dùng:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server khi tra cứu bit người dùng' });
+  }
+});
+
+/**
  * Đồng bộ dữ liệu thống kê từ Redis chốt vào MongoDB DailyStat (Upsert)
  */
 async function syncStatsToMongo(targetDate = getTodayDateStr()) {
@@ -826,9 +1017,29 @@ async function syncStatsToMongo(targetDate = getTodayDateStr()) {
     const pvStr = await redisProxy.get(`stats:pv:daily:${targetDate}`);
     const total_pv = pvStr ? parseInt(pvStr, 10) : 0;
 
+    // 1. Số liệu UV cơ bản từ Redis
     const uv_exact_bitmap = await redisProxy.bitCount(`stats:uv:bitmap:${targetDate}`);
     const uv_approx_hll = await redisProxy.pfCount(`stats:uv:hll:${targetDate}`);
 
+    // 2. Tính UV Hợp Tuần bằng BITOP OR
+    const last7Days = getLast7DaysDateStrs(targetDate);
+    const weekDestKey = `stats:uv:bitmap:week_sync:${targetDate}`;
+    const weekSrcKeys = last7Days.map(d => `stats:uv:bitmap:${d}`);
+    await redisProxy.bitOp('OR', weekDestKey, weekSrcKeys);
+    const weekly_uv_bitmap = await redisProxy.bitCount(weekDestKey);
+
+    // 3. Tính Độc giả quay lại & Retention bằng BITOP AND
+    const yesterday = getYesterdayDateStr(targetDate);
+    const retentionDestKey = `stats:uv:retention_sync:${targetDate}`;
+    await redisProxy.bitOp('AND', retentionDestKey, [`stats:uv:bitmap:${yesterday}`, `stats:uv:bitmap:${targetDate}`]);
+    const retention_users = await redisProxy.bitCount(retentionDestKey);
+    const yesterday_uv = await redisProxy.bitCount(`stats:uv:bitmap:${yesterday}`);
+    const retention_rate = yesterday_uv > 0 ? ((retention_users / yesterday_uv) * 100).toFixed(1) + '%' : '0.0%';
+
+    // 4. Kích thước bộ nhớ Bitmap
+    const bitmap_memory_bytes = await redisProxy.strLen(`stats:uv:bitmap:${targetDate}`);
+
+    // 5. Bảng xếp hạng Trending
     const rawTrending = await redisProxy.zRangeWithScores(`posts:trending:${targetDate}`, 0, -1, { REV: true });
     const allPosts = await Post.find({}, 'id title').lean();
     const top_trending = rawTrending.map(item => {
@@ -845,6 +1056,10 @@ async function syncStatsToMongo(targetDate = getTodayDateStr()) {
       {
         total_pv,
         uv_exact_bitmap,
+        weekly_uv_bitmap,
+        retention_users,
+        retention_rate,
+        bitmap_memory_bytes,
         uv_approx_hll,
         top_trending,
         synced_at: new Date()
@@ -856,7 +1071,7 @@ async function syncStatsToMongo(targetDate = getTodayDateStr()) {
       }
     );
 
-    console.log(`✓ [Cron/Sync] Đã chốt thành công ngày ${targetDate} vào MongoDB Database "ictu_analytics_db"!`);
+    console.log(`✓ [Cron/Sync] Đã chốt thành công ngày ${targetDate} vào MongoDB Database "ictu_analytics_db"! (UV Ngày: ${uv_exact_bitmap}, UV Tuần OR: ${weekly_uv_bitmap}, Retention: ${retention_rate})`);
     return updatedRecord;
   } catch (error) {
     console.error(`✗ [Cron/Sync] Lỗi khi đồng bộ ngày ${targetDate}:`, error);
